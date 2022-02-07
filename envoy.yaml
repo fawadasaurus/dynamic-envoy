@@ -14,14 +14,37 @@ static_resources:
                 route_config:
                   name: local_route
                   virtual_hosts:
-                    - name: backend
-                      domains: ["*"]
+                    - name: backend_foo
+                      domains: ["foo.com"]
+                      routes:
+                        - match: { prefix: "/" }
+                          route: { cluster: service }
+                    - name: backend_bar
+                      domains: ["bar.com"]
                       routes:
                         - match: { prefix: "/" }
                           route: { cluster: service }
                 http_filters:
                   - name: envoy.filters.http.router
                     typed_config: {}
+            transport_socket:
+              name: envoy.transport_sockets.tls
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                common_tls_context:
+                  tls_certificates:
+                  - certificate_chain:
+                      filename: /certs/foo-com.crt
+                    private_key:
+                      filename: certs/foo-com.key
+                    password: 
+                      inline_string: "12345678"
+                  - certificate_chain:
+                      filename: /certs/bar-com.crt
+                    private_key:
+                      filename: certs/bar-com.key
+                    password: 
+                      inline_string: "12345678"
   clusters:
     - name: service
       connect_timeout: 0.25s
